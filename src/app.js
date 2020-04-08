@@ -50,8 +50,6 @@ app.put("/repositories/:id", validateRepositoryId, (request, response) => {
     return response.status(400).json({error:"project not found"})
   }
 
-  // O teste estava gerando varios erros, sempre come;a no primeiro erro, as vezes tu resolvendo ele ja resolver varios...
-  // entendeu? eu so resolvi 2 erros, o restannte arrumou ~sozinho~ AGRADECIDO MAN, at[e]
   const repository= {
     id,
     title,
@@ -62,7 +60,6 @@ app.put("/repositories/:id", validateRepositoryId, (request, response) => {
 
   repositories[repositoriesIndex] = repository
 
-  // Na alteracao tambem tem que retorna o obj que voce alterou.
   return response.json(repository)
 
 });
