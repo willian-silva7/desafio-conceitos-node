@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { uuid } = require("uuidv4");
+const { uuid, isUuid } = require("uuidv4");
 
 const app = express();
 
@@ -9,54 +9,61 @@ app.use(cors());
 
 const repositories = [];
 
+function validateRepositoryId(request,response, next){
+  const {id} = request.params
+  if(!isUuid(id)){
+    return response.status(400).json({error: 'Invalid Project: ID'})
+  }
+
+  return next();
+}
+
 app.get("/repositories", (request, response) => {
   return response.status(200).json(repositories)
 });
 
-app.post("/repositories", (request, response) => {
-  const {title, url, techs} = request.body;
-  const techsArrays = techs.split(',').map(tech=>tech.trim())
-  const likes = 0;
+app.post("/repositories" , (request, response) => {
+  const { url, title, techs} = request.body;
   
   const repository = {
     id: uuid(),
-    title,
     url,
-    techs:techsArrays,
-    likes
+    title,
+    techs,
+    likes:0
   }
   
   repositories.push(repository)
 
-  return response.status(201).json(repository)
+  // Toda vez que criar um novo repository, e necessario retorna ele... tem um test la para isso...
+  return response.json(repository)
 
 });
 
-app.put("/repositories/:id", (request, response) => {
+app.put("/repositories/:id", validateRepositoryId, (request, response) => {
   const {title, url, techs} = request.body;
-  const techsArrays = techs.split(',').map(tech=>tech.trim())
   const {id} = request.params;
   
-
   const repositoriesIndex = repositories.findIndex(repository=> repository.id===id)
 
   if(repositoriesIndex<0){
     return response.status(400).json({error:"project not found"})
   }
 
-  const {likes} = repositories[repositoriesIndex]
-  console.log(likes) 
+  // O teste estava gerando varios erros, sempre come;a no primeiro erro, as vezes tu resolvendo ele ja resolver varios...
+  // entendeu? eu so resolvi 2 erros, o restannte arrumou ~sozinho~ AGRADECIDO MAN, at[e]
   const repository= {
     id,
     title,
     url,
-    tech:techsArrays,
-    likes
+    techs,
+    likes: repositories[repositoriesIndex].likes
   }
 
   repositories[repositoriesIndex] = repository
 
-  return response.status(200).json(repository)
+  // Na alteracao tambem tem que retorna o obj que voce alterou.
+  return response.json(repository)
 
 });
 
@@ -80,25 +87,13 @@ app.post("/repositories/:id/like", (request, response) => {
   const repositoriesIndex = repositories.findIndex(repository=> repository.id===id)
 
   if(repositoriesIndex<0){
-    return response.status(400).json({error:"project not found"})
+    return response.status(400).json({error:"repository not found"})
   }
+  // soh estou com o discord no noot, caso esteja enviando mensagem por lá
+  const likes = repositories[repositoriesIndex].likes += 1
 
-  const {title, url, techs} = repositories[repositoriesIndex]
-  console.log(techs)
-  let {likes} = repositories[repositoriesIndex]
-  likes+=1
-
-  const repository= {
-    id,
-    title,
-    url,
-    techs,
-    likes
-  }
-
-  repositories[repositoriesIndex] = repository
-
-  return response.status(200).json(repository)
+  console.log(likes);//PERA SOH UM MINUTO
+  return response.json({ likes })
 
 });
 
